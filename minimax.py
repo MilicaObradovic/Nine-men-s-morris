@@ -70,7 +70,7 @@ class Game(object):
 
             if self._player_turn == "X":
                 start = time.time()
-                best , spot = self.minimax_first_phase(self.current_board, 5, True, -1, -1,-1,-1,-math.inf,math.inf)
+                best , spot = self.minimax_first_phase(self.current_board, 4, True, -1, -1,-1,-1,-math.inf,math.inf)
                 end = time.time()
                 print('Evaluation time: '+str(round(end - start, 6)))
                 # self.arrayX.append(spot)
@@ -167,6 +167,22 @@ class Game(object):
             game_over = False
             print(self.current_board)
             print(30*"-")
+            if self._player_turn == "X":
+                start = time.time()
+                best , spot = self.minimax_second_phase(self.current_board, 4, True, -1, -1,-1,-1,-math.inf,math.inf)
+                end = time.time()
+                print('Evaluation time: '+str(round(end - start, 6)))
+                # self.arrayX.append(spot)
+                self.current_board.set_value(spot[0][0], spot[0][1], self._player_turn)
+                if self.current_board.closed_morris2(self.current_board.get_arrayX(), spot[0]):
+                    # print(spot[1])
+                    self.current_board.set_value(spot[1][0], spot[1][1], ".")
+                print(spot[0])
+                print(spot[1])
+                # print(self.current_board.get_arrayX())
+                self.next_player(self._player_turn)
+            print(self.current_board)
+            print(30*"-")
             while True:
                 validation, spot = self.insert_validation("spot you want to move", True, False)
                 destinations = self.current_board.possible_destinations(spot)
@@ -219,7 +235,7 @@ class Game(object):
 
     def minimax_first_phase(self, state, depth, max_player, x, y, x2, y2, alpha, beta):
         if depth == 0:
-            return state.evaluation_phase1(x,y, x2, y2)
+            return state.evaluation_phase1(x, y, x2, y2)
             
         # player X
         if max_player:
@@ -233,14 +249,14 @@ class Game(object):
                             array_for_eating = state.possible_for_eating2(state.arrayY)
                             for el in array_for_eating:
                                 state.set_value(el[0], el[1], '.')
-                                move, spot= self.minimax_first_phase(state, depth-1, True, i, j,el[0],el[1], alpha, beta)
+                                move, spot= self.minimax_first_phase(state, depth-1, False, i, j, el[0], el[1], alpha, beta)
                                 state.set_value(el[0], el[1], 'Y')
                                 if move > best:
                                     bestMove[0] = (i,j)
                                     bestMove[1] = (el[0],el[1])
                                     best = move
                         else:
-                            move, spot= self.minimax_first_phase(state, depth-1, False, i , j,-1,-1, alpha, beta)
+                            move, spot= self.minimax_first_phase(state, depth-1, False, i, j, -1, -1, alpha, beta)
                         state.set_value(i, j, '.')
 
                         if move > best:
@@ -263,13 +279,13 @@ class Game(object):
                             array_for_eating = state.possible_for_eating2(state.arrayX)
                             for el in array_for_eating:
                                 state.set_value(el[0], el[1], '.')
-                                move, spot= self.minimax_first_phase(state, depth-1, True, i, j,el[0],el[1], alpha, beta)
+                                move, spot= self.minimax_first_phase(state, depth-1, True, i, j, el[0], el[1], alpha, beta)
                                 state.set_value(el[0], el[1], 'X')
                                 if move < best:
                                     bestMove[1] = (el[0],el[1])
                                     best = move
                         else:
-                            move, spot= self.minimax_first_phase(state, depth-1, True, i, j,-1,-1, alpha, beta)
+                            move, spot= self.minimax_first_phase(state, depth-1, True, i, j, -1, -1, alpha, beta)
                         
                         state.set_value(i, j, '.')
                         
@@ -283,6 +299,84 @@ class Game(object):
                         beta = best
             return best, bestMove
     
+    def minimax_second_phase(self, state, depth, max_player, x, y, x2, y2, alpha, beta):
+        if depth == 0:
+            return state.evaluation_phase2(x, y, x2, y2)
+            
+        # player X
+        if max_player:
+            best = -math.inf
+            bestMove = [(-1,-1), (-1,-1)]
+            for el in state.arrayX:
+                destinations = state.possible_destinations(el)
+                if len(destinations) != 0:
+                    # ako nije blokirano polje salji sve moguce statove njegovog pomeranja
+                    for dest in destinations:
+                        state.set_value(el[0], el[1], '.')
+                        state.set_value(dest[0], dest[1], 'X')
+                        if state.closed_morris2(state.get_arrayX(),dest):
+                            # ako se napravila mica jos dodatnih stateova zbog mogucih jedenja
+                            array_for_eating = state.possible_for_eating2(state.arrayY)
+                            for eat in array_for_eating:
+                                state.set_value(eat[0], eat[1], '.')
+                                move, spot= self.minimax_second_phase(state, depth-1, False, dest[0], dest[1], eat[0], eat[1], alpha, beta)
+                                state.set_value(eat[0], eat[1], 'Y')
+                                if move > best:
+                                    bestMove[0] = dest
+                                    bestMove[1] = (eat[0],eat[1])
+                                    best = move
+                        else:
+                            move, spot= self.minimax_second_phase(state, depth-1, False, dest[0] , dest[1], -1, -1, alpha, beta)
+                        state.set_value(dest[0], dest[1], '.')
+                        state.set_value(el[0], el[1], 'X')
+
+                        if move > best:
+                            bestMove[0] = dest
+                            best = move
+
+                        if best >= beta:
+                            return best, bestMove
+
+                        if best > alpha:
+                            alpha = best
+            return best, bestMove
+        else:
+            best = math.inf
+            bestMove = [(-1,-1), (-1,-1)]
+            for el in state.arrayY:
+                destinations = state.possible_destinations(el)
+                if len(destinations) != 0:
+                    # ako nije blokirano polje salji sve moguce statove njegovog pomeranja
+                    for dest in destinations:
+                        state.set_value(el[0], el[1], '.')
+                        state.set_value(dest[0], dest[1], 'Y')
+                        if state.closed_morris2(state.get_arrayY(),dest):
+                            # ako se napravila mica jos dodatnih stateova zbog mogucih jedenja
+                            array_for_eating = state.possible_for_eating2(state.arrayX)
+                            for eat in array_for_eating:
+                                state.set_value(eat[0], eat[1], '.')
+                                move, spot= self.minimax_second_phase(state, depth-1, True, dest[0], dest[1], eat[0], eat[1], alpha, beta)
+                                state.set_value(eat[0], eat[1], 'X')
+                                if move > best:
+                                    bestMove[0] = dest
+                                    bestMove[1] = (eat[0],eat[1])
+                                    best = move
+                        else:
+                            move, spot= self.minimax_second_phase(state, depth-1, True, dest[0] , dest[1], -1, -1, alpha, beta)
+                        state.set_value(dest[0], dest[1], '.')
+                        state.set_value(el[0], el[1], 'Y')
+
+                        if move < best:
+                            bestMove[0] = dest
+                            best = move
+
+                        if best <= alpha:
+                            return best, bestMove
+
+                        if best < beta:
+                            beta = best
+            return best, bestMove
+
     def play(self):
         self.first_phase()
 

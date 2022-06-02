@@ -248,6 +248,18 @@ class Board(object):
         else:
             return False
 
+    def winning_config(self):
+        if len(self.arrayX) == 2:
+            return -1
+        elif len(self.arrayY) == 2:
+            return 1
+        elif num_of_blocked("Y") == len(self.arrayY):
+            return 1
+        elif num_of_blocked("X") == len(self.arrayX):
+            return -1
+        else:
+            return 0
+
     def diff_num_of_two_config(self):
         return self.two_piece_config(self.arrayX) - self.two_piece_config(self.arrayY)
 
@@ -258,13 +270,20 @@ class Board(object):
         return self.num_of_morrises(self.arrayX, True) - self.num_of_morrises(self.arrayY, True)
 
     def evaluation_phase1(self, x, y, x2, y2):
-        return 26 * self.diff_num_of_morrises()+\
-            self.diff_num_of_blocked()+\
-            15 * self.diff_num_of_pieces()+\
-                    self.double_morises()+10 * self.diff_num_of_two_config() + 20 * self.closed_moris_config(x,y), [(x,y),(x2, y2)]
+        return 26 * self.diff_num_of_morrises() +\
+            self.diff_num_of_blocked() +\
+            9 * self.diff_num_of_pieces() +\
+            self.double_morises()+\
+            10 * self.diff_num_of_two_config() +\
+            18 * self.closed_moris_config(x,y), [(x,y),(x2, y2)]
 
-    # def evaluation_eating(self):
-    #     return 10 * self.diff_num_of_two_config()
+    def evaluation_phase2(self, x, y, x2, y2):
+        return 43 * self.diff_num_of_morrises() +\
+            10 * self.diff_num_of_blocked() +\
+            11 * self.diff_num_of_pieces() +\
+            8 * self.double_morises() +\
+            14 * self.closed_moris_config(x,y) +\
+            1190 * self.winning_config(), [(x,y),(x2, y2)]
 
     def __str__(self):
         ret = "\n"
