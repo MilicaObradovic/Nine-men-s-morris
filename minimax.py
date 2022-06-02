@@ -65,20 +65,22 @@ class Game(object):
             return False, spot
 
     def first_phase(self):
-        first = 8
+        first = 9
         while first > 0:
 
             if self._player_turn == "X":
                 start = time.time()
-                best , spot = self.minimax_first_phase(self.current_board, 4, True, -1, -1,-math.inf,math.inf)
+                best , spot = self.minimax_first_phase(self.current_board, 5, True, -1, -1,-1,-1,-math.inf,math.inf)
                 end = time.time()
                 print('Evaluation time: '+str(round(end - start, 6)))
                 # self.arrayX.append(spot)
-                self.current_board.set_value(spot[0], spot[1], self._player_turn)
-                if self.current_board.closed_morris2(self.current_board.get_arrayX(), spot):
-                    val = self.current_board.possible_for_eating2(self.current_board.arrayY)[0]
-                    self.current_board.set_value(val[0], val[1], ".")
-                print(self.current_board.get_arrayX())
+                self.current_board.set_value(spot[0][0], spot[0][1], self._player_turn)
+                if self.current_board.closed_morris2(self.current_board.get_arrayX(), spot[0]):
+                    # print(spot[1])
+                    self.current_board.set_value(spot[1][0], spot[1][1], ".")
+                print(spot[0])
+                print(spot[1])
+                # print(self.current_board.get_arrayX())
                 self.next_player(self._player_turn)
             print(self.current_board)
             print(30*"-")
@@ -215,26 +217,34 @@ class Game(object):
             self.next_player(self._player_turn)
             # uslov za izlazak iz druge faze je uslov za Game over
 
-    def minimax_first_phase(self, state, depth, max_player, x, y, alpha, beta):
+    def minimax_first_phase(self, state, depth, max_player, x, y, x2, y2, alpha, beta):
         if depth == 0:
-            return state.evaluation_phase1(x,y)
+            return state.evaluation_phase1(x,y, x2, y2)
             
         # player X
         if max_player:
             best = -math.inf
-            bestMove = (-1,-1)
+            bestMove = [(-1,-1), (-1,-1)]
             for i in range(7):
                 for j in range(7):
                     if state.get_value(i, j) == '.':
                         state.set_value(i, j, 'X')
                         if state.closed_morris2(state.get_arrayX(),[i,j]):
                             array_for_eating = state.possible_for_eating2(state.arrayY)
-
-                        move, spot= self.minimax_first_phase(state, depth-1, False, i , j, alpha, beta)
+                            for el in array_for_eating:
+                                state.set_value(el[0], el[1], '.')
+                                move, spot= self.minimax_first_phase(state, depth-1, True, i, j,el[0],el[1], alpha, beta)
+                                state.set_value(el[0], el[1], 'Y')
+                                if move > best:
+                                    bestMove[0] = (i,j)
+                                    bestMove[1] = (el[0],el[1])
+                                    best = move
+                        else:
+                            move, spot= self.minimax_first_phase(state, depth-1, False, i , j,-1,-1, alpha, beta)
                         state.set_value(i, j, '.')
 
                         if move > best:
-                            bestMove = spot
+                            bestMove[0] = (i,j)
                             best = move
                     if best >= beta:
                         return best, bestMove
@@ -244,19 +254,27 @@ class Game(object):
             return best, bestMove
         else:
             best = math.inf
-            bestMove = (-1,-1)
+            bestMove = [(-1,-1), (-1,-1)]
             for i in range(7):
                 for j in range(7):
                     if state.get_value(i, j) == '.':
                         state.set_value(i, j, 'Y')
                         if state.closed_morris2(state.get_arrayY(),[i,j]):
                             array_for_eating = state.possible_for_eating2(state.arrayX)
-
-                        move, spot= self.minimax_first_phase(state, depth-1, True, i, j, alpha, beta)
+                            for el in array_for_eating:
+                                state.set_value(el[0], el[1], '.')
+                                move, spot= self.minimax_first_phase(state, depth-1, True, i, j,el[0],el[1], alpha, beta)
+                                state.set_value(el[0], el[1], 'X')
+                                if move < best:
+                                    bestMove[1] = (el[0],el[1])
+                                    best = move
+                        else:
+                            move, spot= self.minimax_first_phase(state, depth-1, True, i, j,-1,-1, alpha, beta)
+                        
                         state.set_value(i, j, '.')
                         
                         if move < best:
-                            bestMove = spot
+                            bestMove[0] = (i,j)
                             best = move
                     if best <= alpha:
                         return best, bestMove

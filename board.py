@@ -257,14 +257,14 @@ class Board(object):
     def double_morises(self):
         return self.num_of_morrises(self.arrayX, True) - self.num_of_morrises(self.arrayY, True)
 
-    def evaluation_phase1(self, x, y):
+    def evaluation_phase1(self, x, y, x2, y2):
         return 26 * self.diff_num_of_morrises()+\
             self.diff_num_of_blocked()+\
-            9 * self.diff_num_of_pieces()+\
-                    self.double_morises()+10 * self.diff_num_of_two_config() + 20 * self.closed_moris_config(x,y), (x,y)
+            15 * self.diff_num_of_pieces()+\
+                    self.double_morises()+10 * self.diff_num_of_two_config() + 20 * self.closed_moris_config(x,y), [(x,y),(x2, y2)]
 
-    def evaluation_eating(self):
-        return 10 * self.diff_num_of_two_config()
+    # def evaluation_eating(self):
+    #     return 10 * self.diff_num_of_two_config()
 
     def __str__(self):
         ret = "\n"
