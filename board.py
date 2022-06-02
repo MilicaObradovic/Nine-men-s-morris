@@ -13,8 +13,14 @@ class Board(object):
     def get_arrayX(self):
         return self.arrayX
 
+    def get_el_arrayX(self, el):
+        return self.arrayX[el]
+
     def get_arrayY(self):
         return self.arrayY
+
+    def get_el_arrayY(self, el):
+        return self.arrayY[el]
 
     def get_value(self, i, j):
         return self.board[i][j]
@@ -34,10 +40,16 @@ class Board(object):
                     if i == el[0] and j == el[1]:
                         self.arrayY.remove(el)
         self.board[i][j] = value
-        # print("X = ")
-        # print(self.arrayX)
-        # print("Y = ")
-        # print(self.arrayY)
+
+    def possible_for_eating2(self, array):
+        if self.all_morises(array):
+            return array
+        else:
+            array2 = []
+            for el in array:
+                if self.closed_morris2(array,el) == False:
+                    array2.append(el)
+            return array2
 
     def first_move(self):
         if len(self.arrayX) == 1:
@@ -110,58 +122,6 @@ class Board(object):
 
     def diff_num_of_blocked(self):
         return self.num_of_blocked("Y") - self.num_of_blocked("X")
-
-    def closed_morris(self, array, new_spot):
-        x = 0
-        y = 0
-        third1x = 0
-        third2x = 0
-        third1y = 0
-        third2y = 0
-
-        for el in array:
-            # elementi u istom redu
-            if el[0] == new_spot[0]:
-                x += 1
-            # elementi u istoj koloni
-            if el[1] == new_spot[1]:
-                y += 1
-            if new_spot[0] == 3 or new_spot[1] == 3:
-                if new_spot[0] == 3 and el[0] == 3:
-                    if new_spot[1] in [0,1,2]:
-                        if el[1] in [0,1,2]:
-                            third1x += 1
-                    else:
-                        if el[1] in [4, 5, 6]:
-                            third2x += 1
-                elif new_spot[1] == 3 and el[1] == 3:
-                    if new_spot[0] in [0,1,2]:
-                        if el[0] in [0,1,2]:
-                            third1y += 1
-                    else:
-                        if el[0] in [4, 5, 6]:
-                            third2y += 1
-
-        if x > 2 and new_spot[0] == 3:
-            if third1x == 3 or third2x == 3:
-                return True
-        elif y > 2 and new_spot[1] == 3:
-            if third1y == 3 or third2y == 3:
-                return True
-        elif x == 3:
-            return True
-        elif y == 3:
-            return True
-        elif third1x == 3:
-            return True
-        elif third2x == 3:
-            return True
-        elif third1y == 3:
-            return True
-        elif third2y == 3:
-            return True
-        else:
-            return False
 
     def morrises(self, array, x, y):
         array2 = []
@@ -240,12 +200,53 @@ class Board(object):
         return ret
 
     def closed_moris_config(self, x, y):
-        if self.closed_morris(self.arrayX, [x,y]):
+        if self.closed_morris2(self.arrayX, [x,y]):
             return 1
-        elif self.closed_morris(self.arrayY, [x,y]):
+        elif self.closed_morris2(self.arrayY, [x,y]):
             return -1
         else:
             return 0
+
+    def all_morises(self, array):
+        if len(array) < 3:
+            return False
+        else:
+            mistake = 0
+            # print(array)
+            for el in array:
+                # print(el)
+                closed = self.closed_morris2(array, el)
+                # print(closed)
+                if closed == False:
+                    mistake += 1
+                    break
+            # print("m"+str(mistake))
+            if mistake == 0:
+                return True
+            else:
+                return False
+
+    def closed_morris2(self, array, new):
+        arrayX = self.morrises(array, 0, 1)
+        arrayY = self.morrises(array, 1, 0)
+        if new[0] == 3 and new[1] in [0,1,2] and arrayX[3] == 3:
+                return True
+        elif new[0] == 3 and new[1] in [4,5,6] and arrayX[4] == 3:
+                return True
+        elif new[0] > 3 and arrayX[new[0]+1] == 3:
+                return True
+        elif new[0] < 3 and arrayX[new[0]] == 3:
+                return True
+        elif new[1] == 3 and new[0] in [0,1,2] and arrayY[3] == 3:
+                return True
+        elif new[1] == 3 and new[0] in [4,5,6] and arrayY[4] == 3:
+                return True
+        elif new[1] > 3 and arrayY[new[1]+1] == 3:
+                return True
+        elif new[1] < 3 and arrayY[new[1]] == 3:
+                return True
+        else:
+            return False
 
     def diff_num_of_two_config(self):
         return self.two_piece_config(self.arrayX) - self.two_piece_config(self.arrayY)
@@ -261,6 +262,9 @@ class Board(object):
             self.diff_num_of_blocked()+\
             9 * self.diff_num_of_pieces()+\
                     self.double_morises()+10 * self.diff_num_of_two_config() + 20 * self.closed_moris_config(x,y), (x,y)
+
+    def evaluation_eating(self):
+        return 10 * self.diff_num_of_two_config()
 
     def __str__(self):
         ret = "\n"
@@ -281,6 +285,7 @@ class Board(object):
         return ret
 
 
-array = [[1,1], [1,3], [5,1], [3,1]]
-b = Board()
-# print(10 * b.diff_num_of_two_config())
+# array = [[0,0], [0,6], [1,3],[0,3], [5,3], [6,3], [4,2], [4,4], [2,2], [2,4]]
+# b = Board()
+# print(array)
+# print(b.possible_for_eating2(array))

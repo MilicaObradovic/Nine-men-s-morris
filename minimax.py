@@ -6,8 +6,6 @@ class Game(object):
     def __init__(self):
         self.current_board = Board()
         self._player_turn = 'X'
-        # self.arrayX = []
-        # self.arrayY = []
         
     def next_player(self, previous):
         if previous == "X":
@@ -77,7 +75,10 @@ class Game(object):
                 print('Evaluation time: '+str(round(end - start, 6)))
                 # self.arrayX.append(spot)
                 self.current_board.set_value(spot[0], spot[1], self._player_turn)
-                print(self.current_board.arrayX)
+                if self.current_board.closed_morris2(self.current_board.get_arrayX(), spot):
+                    val = self.current_board.possible_for_eating2(self.current_board.arrayY)[0]
+                    self.current_board.set_value(val[0], val[1], ".")
+                print(self.current_board.get_arrayX())
                 self.next_player(self._player_turn)
             print(self.current_board)
             print(30*"-")
@@ -89,15 +90,11 @@ class Game(object):
                     print("Unavailable position.. try again")
                 else:
                     self.current_board.set_value(spot[0], spot[1], self._player_turn)
-                    # if self._player_turn == "X":
-                    #     self.arrayX.append(spot)
-                    # else:
-                    #     self.arrayY.append(spot)
-
+                   
                     if self._player_turn == "X":
-                        eating = self.current_board.closed_morris(self.current_board.arrayX, spot)
+                        eating = self.current_board.closed_morris2(self.current_board.get_arrayX(), spot)
                     else:
-                        eating = self.current_board.closed_morris(self.current_board.arrayY, spot)
+                        eating = self.current_board.closed_morris2(self.current_board.get_arrayY(), spot)
 
                     self.eating_function(eating)
                     self.next_player(self._player_turn)
@@ -106,51 +103,6 @@ class Game(object):
         print(self.current_board)
         print(30*"-")
         print("Insert-faze is finished... Next is moving-faze")
-
-    def delta(self, num, array1, array2, old1, old, new):
-        if old1 in array1:
-            delta = old -new
-            if delta in array2:
-                return True
-            else:
-                return False 
-        else:
-            return None
-
-    def new_destination_validation(self, string, old_spot):
-        validation, spot = self.insert_validation(string, False, False)
-        if validation == True:
-            if old_spot[0] != spot[0] and old_spot[1] != spot[1]:
-                return False, spot
-            elif old_spot[0] == spot[0]:
-                # out
-                check = self.delta(0,[0,6], [-3,3], old_spot[0], old_spot[1], spot[1])
-                if check != None:
-                    return check, spot
-                # middle
-                check = self.delta(0,[1,5], [-2,2], old_spot[0], old_spot[1], spot[1])
-                if check != None:
-                    return check, spot
-                # in
-                check = self.delta(0,[2,3,4], [-1,1], old_spot[0], old_spot[1], spot[1])
-                if check != None:
-                    return check, spot
-            elif old_spot[1] == spot[1]:
-                # out
-                check = self.delta(1,[0,6], [-3,3], old_spot[1], old_spot[0], spot[0])
-                if check != None:
-                    return check, spot
-                # middle
-                check = self.delta(1,[1,5], [-2,2], old_spot[1], old_spot[0], spot[0])
-                if check != None:
-                    return check, spot
-                # in
-                check = self.delta(1,[2,3,4], [-1,1], old_spot[1], old_spot[0], spot[0])
-                if check != None:
-                    return check, spot
-                
-        else:
-            return False, spot
 
     def selection(self, array):
         while True:
@@ -170,77 +122,6 @@ class Game(object):
                     print("You have choosen unavailable spot")
         return spot
 
-    # def closed_morris(self, array, new_spot):
-    #     x = 0
-    #     y = 0
-    #     third1x = 0
-    #     third2x = 0
-    #     third1y = 0
-    #     third2y = 0
-
-    #     for el in array:
-    #         # elementi u istom redu
-    #         if el[0] == new_spot[0]:
-    #             x += 1
-    #         # elementi u istoj koloni
-    #         if el[1] == new_spot[1]:
-    #             y += 1
-    #         if new_spot[0] == 3 or new_spot[1] == 3:
-    #             if new_spot[0] == 3 and el[0] == 3:
-    #                 if new_spot[1] in [0,1,2]:
-    #                     if el[1] in [0,1,2]:
-    #                         third1x += 1
-    #                 else:
-    #                     if el[1] in [4, 5, 6]:
-    #                         third2x += 1
-    #             elif new_spot[1] == 3 and el[1] == 3:
-    #                 if new_spot[0] in [0,1,2]:
-    #                     if el[0] in [0,1,2]:
-    #                         third1y += 1
-    #                 else:
-    #                     if el[0] in [4, 5, 6]:
-    #                         third2y += 1
-
-    #     if x > 2 and new_spot[0] == 3:
-    #         if third1x == 3 or third2x == 3:
-    #             return True
-    #     elif y > 2 and new_spot[1] == 3:
-    #         if third1y == 3 or third2y == 3:
-    #             return True
-    #     elif x == 3:
-    #         return True
-    #     elif y == 3:
-    #         return True
-    #     elif third1x == 3:
-    #         return True
-    #     elif third2x == 3:
-    #         return True
-    #     elif third1y == 3:
-    #         return True
-    #     elif third2y == 3:
-    #         return True
-    #     else:
-    #         return False
-
-    def all_morises(self, array):
-        if len(array) < 3 or len(array) % 3 != 0:
-            return False
-        else:
-            mistake = 0
-            # print(array)
-            for el in array:
-                # print(el)
-                closed = self.current_board.closed_morris(array, el)
-                # print(closed)
-                if closed == False:
-                    mistake += 1
-                    break
-            # print("m"+str(mistake))
-            if mistake == 0:
-                return True
-            else:
-                return False
-
     def eating_option(self):
         while True:
             valid, spot = self.insert_validation("spot for eating", False, True)
@@ -252,14 +133,14 @@ class Game(object):
                 print("Empty spot.. try again")
             else:
                 if self._player_turn == "X":
-                    closed = self.current_board.closed_morris(self.current_board.arrayY, spot)
+                    closed = self.current_board.closed_morris2(self.current_board.get_arrayY(), spot)
                 else:
-                    closed = self.current_board.closed_morris(self.current_board.arrayX, spot)
+                    closed = self.current_board.closed_morris2(self.current_board.get_arrayX(), spot)
                 if closed == True:
                     if self._player_turn == "X":
-                        morises = self.all_morises(self.current_board.arrayY)
+                        morises = self.current_board.all_morises(self.current_board.arrayY)
                     else:
-                        morises = self.all_morises(self.current_board.arrayX)
+                        morises = self.current_board.all_morises(self.current_board.arrayX)
 
                     if morises == True:
                         validation = True
@@ -278,18 +159,6 @@ class Game(object):
             print(30*"-")
             spot_for_eating = self.eating_option()
             self.current_board.set_value(spot_for_eating[0], spot_for_eating[1], ".")
-            # if self._player_turn == "X":
-            #     for el in self.current_board.arrayY:
-            #         if spot_for_eating[0] == el[0] and spot_for_eating[1] == el[1]:
-            #             self.current_board.arrayY.remove(el)
-            #             break
-            #     print(self.current_board.arrayY)
-            # else:
-            #     for el in self.current_board.arrayX:
-            #         if spot_for_eating[0] == el[0] and spot_for_eating[1] == el[1]:
-            #             self.current_board.arrayX.remove(el)
-            #             break
-            #     print(self.current_board.arrayX)
 
     def second_phase(self):
         while True:
@@ -325,26 +194,13 @@ class Game(object):
             new_spot = self.selection(destinations)
 
             self.current_board.set_value(new_spot[0], new_spot[1], self._player_turn)
-            # if self._player_turn == "X":
-            #     self.arrayX.append(new_spot)
-            #     for el in self.arrayX:
-            #         if spot[0] == el[0] and spot[1] == el[1]:
-            #             self.arrayX.remove(el)
-            #             break
-            # else:
-            #     self.arrayY.append(new_spot)
-            #     for el in self.arrayY:
-            #         if spot[0] == el[0] and spot[1] == el[1]:
-            #             self.arrayY.remove(el)
-            #             break
-
             self.current_board.set_value(spot[0], spot[1], ".")
 
             # poduslov ako se napravila mica mogucnost jedenja
             if self._player_turn == "X":
-                eating = self.current_board.closed_morris(self.current_board.arrayX, new_spot)
+                eating = self.current_board.closed_morris2(self.current_board.arrayX, new_spot)
             else:
-                eating = self.current_board.closed_morris(self.current_board.arrayY, new_spot)
+                eating = self.current_board.closed_morris2(self.current_board.arrayY, new_spot)
 
             self.eating_function(eating)
             if self._player_turn == "X":
@@ -371,8 +227,12 @@ class Game(object):
                 for j in range(7):
                     if state.get_value(i, j) == '.':
                         state.set_value(i, j, 'X')
+                        if state.closed_morris2(state.get_arrayX(),[i,j]):
+                            array_for_eating = state.possible_for_eating2(state.arrayY)
+
                         move, spot= self.minimax_first_phase(state, depth-1, False, i , j, alpha, beta)
                         state.set_value(i, j, '.')
+
                         if move > best:
                             bestMove = spot
                             best = move
@@ -389,8 +249,12 @@ class Game(object):
                 for j in range(7):
                     if state.get_value(i, j) == '.':
                         state.set_value(i, j, 'Y')
+                        if state.closed_morris2(state.get_arrayY(),[i,j]):
+                            array_for_eating = state.possible_for_eating2(state.arrayX)
+
                         move, spot= self.minimax_first_phase(state, depth-1, True, i, j, alpha, beta)
                         state.set_value(i, j, '.')
+                        
                         if move < best:
                             bestMove = spot
                             best = move
@@ -406,6 +270,3 @@ class Game(object):
 
 g = Game()
 g.play()
-
-# g.first_faze()
-# g.second_faze()
